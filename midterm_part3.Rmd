@@ -3,6 +3,7 @@ title: "Los Angeles Lakers 2005-2024 Shot Analysis"
 author: "Carter Abitz"
 date: "2025-04-02"
 output: html_document
+self-contained: true
 ---
 
 ```{r include = FALSE}
@@ -17,7 +18,7 @@ library(grid)
 library(png)
 ```
 
-```{r echo = FALSE}
+```{r include = FALSE}
 #Set up parameters and storage for retrieving shot data
 years <- 2005:2024
 shots_list <- list()
@@ -82,10 +83,13 @@ animation <- animate(
   fps = 5,
   renderer = gifski_renderer()
 )
+```
 
+```{r echo =FALSE}
 #Display animation
 animation
 ```
+
 
 •	Shot volume has increased slightly, especially from behind the 3-point line.
 
