@@ -97,12 +97,12 @@ animation
 
 •	Field goal percentage has remained relatively the same, even with increased long-range attempts.
 
-•	Notable surge in 3-point shot attempts beginning in 2013 aligns with NBA trends.
+•	Lakers have a consistent emphasis on close range scoring throughout the years.
 
 
 Total shot attempts have recently started picking off. From 2005-2012, the Lakers attempted less shots than they did after. From 2005-2012 there were an average of 6625 shots per season. From 2013-2024 there were an average of 7000 shots per season. From 2005-2012, the Lakers shot 1568 3PT shots per season on average. This made up 23.8% of all shot attempts. From 2013-2024, the Lakers shot 2105 3PT shots per season on average. This made up 30.3% of all shot attempts.
 
-From 2005-2012, the Lakers shot 2137 midrange jump shots per season on average. This made up 32.5% of all shot attempts. From 2013-2024, the Lakers shot 1674 midrange jump shots per season on average. This made up 24.1% of all shot attempts. In 2013–2024, the Lakers attempted high-volume 3s. From the 2011-2012 season to the 2012-2013 season, there was a drastic increase in the percentage of 3PT attempts. In the 2011-2012 season, there were 5318 shot attempts and 1111 3PT attempts, resulting in 20.9% of total shots being 3PT’s. In the 2012-2013 season, there were 6632 shot attempts and 2007 3PT attempts, resulting in 30.3% of total shots being 3PT’s. By 2024, 3PT shots made up over 35% (35.8%) of all shot attempts. 
+From 2005-2012, the Lakers shot 2137 midrange jump shots per season on average. This made up 32.5% of all shot attempts. From 2013-2024, the Lakers shot 1674 midrange jump shots per season on average. This made up 24.1% of all shot attempts. In 2013–2024, the Lakers attempted high-volume 3s. 
 
 In 2005-2012, the Lakers had an average of 46% field goal percentage. In 2013-2024, the Lakers had an average of 46.2% field goal percentage. Even with the shot attempts becoming more and more centered around 3PT attempts, the field goal percentage has stayed high. 
 
