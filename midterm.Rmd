@@ -1,0 +1,167 @@
+---
+title: "STAT 345 Midterm Project"
+author: "Carter Abitz"
+font: 12pt
+date: "Due April 4"
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+self-contained: true
+---
+
+> "Our offense is like the Pythagorean Theorem. There is no answer!", _Shaquille O'Neal_
+
+## The Background
+
+Your role for the midterm project is that of data analyst intern at an NBA (professional basketball) team. Your direct supervisor (also part of the analytics team) has asked you to create a data visualization to illustrate how (or if) the team's shots have changed over time. After some initial clarifying questions, your supervisor confessed that they had seen some pretty cool shot charts at http://savvastjortjoglou.com/nba-shot-sharts.html and would like to extend the ideas a bit. 
+
+Your data for the midterm project may come from a variety of sources, including the NBA directly, as well as Basketball-Reference, HoopsHype, and others. There are several ways to access the data, but perhaps the simplest is through the `nbastatR` package, which serves as a wrapper (or set of helper functions) for these various data sources. There is a lot of potentially useful information that can be found using this package; unfortunately, the documentation is somewhat inconsistent. For example, the documentation at https://www.rdocumentation.org/packages/nbastatR/versions/0.1.110202031 is pretty well-formatted and easy to navigate, but the current function names have changed a bit (see `?nbastatR` and click "Index"). (If you use the nbastatR package, you'll want to install the package using the following code. There are other packages with this type of data, though.) You are welcome to scrape other websites or use other packages if you choose.
+
+
+```{r}
+library(devtools)
+devtools::install_github("abresler/nbastatR@aba9179ef644f263387c1536d6ddd26104d79cf4")
+library(nbastatR)
+library(ggplot2)
+library(dplyr)
+library(gganimate)
+library(grid)
+library(png)
+```
+
+
+## The Tasks
+
+1. (30 points) Produce a graphic displaying the shot locations for a particular team over several years. Some notes:
+
+   - Colors should be chosen to reflect the team, if possible.
+   - There are likely many overlaid points -- handle this by either binning these by location, or use opacity.
+   - Incorporate information about whether the shot was made or not (shape, color, etc.).
+   - The graphic should be well-labeled, titled, etc.
+   - Start with a graph for a single year, then extend to several years. Up to 20 years of shot data is available. Either facet these by year or animate using the years.
+   - You'll want to figure out what the coordinates mean somehow. This might be through the documentation, but could also be determined using aspects of the data itself and the dimensions of an NBA court.
+    - Put a basketball court on the background of the image (you'll need to scale it appropriately).
+
+```{r}
+years <- 2005:2024
+shots_list <- list()
+Sys.setenv("VROOM_CONNECTION_SIZE" = 131072*2) 
+
+for (year in years) {  
+  shots_year <- teams_shots(teams = "Los Angeles Lakers", seasons = year) 
+  shots_list[[as.character(year)]] <- shots_year
+  Sys.sleep(2)
+}
+
+shots <- bind_rows(shots_list, .id = "season") 
+
+
+shots$season <- as.numeric(shots$season)
+
+shots <- shots %>%
+  mutate(shot_made = ifelse(isShotMade, "Made", "Missed"))
+
+draw_court <- function() { 
+  court_image <- readPNG("at0qmprv.png")
+  rasterGrob(court_image, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE)
+}
+
+court <- function(){
+  court_theme <- theme_minimal() +
+    theme(panel.grid = element_blank(),
+          panel.background = element_rect(fill = "white", color = NA),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          plot.title = element_text(size = 18, face = "bold"),
+          legend.position = "right")
+  return(court_theme)
+}
+
+shot_chart <- ggplot(shots, aes(x = locationX, y = locationY, shape = typeShot)) + 
+  annotation_custom(draw_court(), xmin = -321, xmax = 321, ymin = -98, ymax = 898) +
+  geom_point(aes(color = shot_made), alpha = 0.5, size = 2) +
+  scale_color_manual(values = c("Made" = "purple", "Missed" = "gold")) +
+  labs(title = "Los Angeles Lakers Shot Chart", subtitle = "2005-2024",
+       x = "Court X", y = "Court Y", color = "Shot Outcome") +
+  court()
+
+animated_shot_chart <- shot_chart +
+  transition_states(season, transition_length = 2, state_length = 10) +
+  labs(title = "Los Angeles Lakers Shot Chart: {closest_state}", shape = "Shot Type")
+
+animation <- animate(animated_shot_chart, nframes = 100, fps = 5, renderer = gifski_renderer())
+
+animation
+
+```
+   
+4. (10 points) Above and Beyond. Choose either option below. You are welcome to explore both, but only one is required. 
+  - Option 2: If the NBA were to incorporate a 4-point shot, where would you draw a 4-point arc? Some notes:
+    - You likely should base your decision at least partly on proportion of shots made from a given range. You might consider an expected value calculation here.
+    - Your arc can be shaped as you see fit; simple arcs are sufficient for this exploration.
+    - Provide an example of a consequence (positive or negative) if a 4-point shot was incorporated. (e.g., "my_favorite_player's season point total would increase by x%")
+    - You do not need to create a plot representing your arc, though you are welcome to do so!
+
+If I were to incorporate a 4-point shot, I would draw the 4-point arc 28 feet away from the hoop. I came to this decision by calculating an expected value for each type of shot using all data from the Los Angeles Lakers. For all 2-point shots, the expected value is 1.014. For all 3-point shots that are less than 28 feet, the expected value is 1.068. Finally, for all 3-point shots that are more than 27 feet (new 4-point shot), the expected value is 0.944. This aligns with both the expected value of 2-point shots and 3-point shots ensuring that the power of the 4-point shot will not be too great. If we incorporated a 4-point line, LeBron James would have scored 16 4-point shots in the 2024 season. This would result in an increase of 16 points for his 2024 season. 
+```{r include=FALSE}
+shot_pct_test_2 <- shots %>%
+  select(typeShot, distanceShot, shot_made) %>%
+  filter(between(distanceShot, 0, 22)) %>%
+  group_by(typeShot, shot_made) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = shot_made, values_from = count, values_fill = 0) %>%
+  mutate(
+    total = Made + Missed,
+    fg_pct = round(100 * Made / total, 1)
+  )
+
+shot_pct_test_2
+
+shot_pct_test_3 <- shots %>%
+  select(typeShot, distanceShot, shot_made) %>%
+  filter(between(distanceShot, 23, 27)) %>%
+  group_by(typeShot, shot_made) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = shot_made, values_from = count, values_fill = 0) %>%
+  mutate(
+    total = Made + Missed,
+    fg_pct = round(100 * Made / total, 1)
+  )
+
+shot_pct_test_3
+
+shot_pct_test_4 <- shots %>%
+  select(typeShot, distanceShot, shot_made) %>%
+  filter(between(distanceShot, 28, 100)) %>%
+  group_by(typeShot, shot_made) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = shot_made, values_from = count, values_fill = 0) %>%
+  mutate(
+    total = Made + Missed,
+    fg_pct = round(100 * Made / total, 1)
+  )
+
+shot_pct_test_4
+
+
+.507*2
+.356*3
+.236*4
+
+lebron_2024 <- shots %>%
+  filter(namePlayer == "LeBron James", season == 2024)
+lebron_4pt_made <- lebron_2024 %>%
+  filter(distanceShot >= 28, shot_made == "Made")
+n_4pt_made <- nrow(lebron_4pt_made)
+n_4pt_made
+
+```
+
+
+  
+  
+  
+  
+
+

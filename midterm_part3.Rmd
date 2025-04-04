@@ -1,0 +1,105 @@
+---
+title: "Los Angeles Lakers 2005-2024 Shot Analysis"
+author: "Carter Abitz"
+date: "2025-04-02"
+output: html_document
+---
+
+```{r include = FALSE}
+#Load required packages 
+library(devtools)
+devtools::install_github("abresler/nbastatR@aba9179ef644f263387c1536d6ddd26104d79cf4")
+library(nbastatR)
+library(dplyr)
+library(ggplot2)
+library(gganimate)
+library(grid)
+library(png)
+```
+
+```{r echo = FALSE}
+#Set up parameters and storage for retrieving shot data
+years <- 2005:2024
+shots_list <- list()
+
+#Increase buffer size to avoid issues when pulling multiple seasons
+Sys.setenv("VROOM_CONNECTION_SIZE" = 131072 * 2)
+
+#Download Lakers shot data season-by-season
+for (year in years) {
+  shots_year <- teams_shots(teams = "Los Angeles Lakers", seasons = year)
+  shots_list[[as.character(year)]] <- shots_year
+  Sys.sleep(2)  #Delay prevents request overload
+}
+
+#Combine yearly data and preprocess
+shots <- bind_rows(shots_list, .id = "season") %>%
+  mutate(
+    season = as.numeric(season),
+    shot_made = ifelse(isShotMade, "Made", "Missed")
+  )
+
+#Load and return court background image
+draw_court <- function() {
+  court_image <- readPNG("at0qmprv.png")
+  rasterGrob(court_image, width = unit(1, "npc"), height = unit(1, "npc"), interpolate = TRUE)
+}
+
+#Apply custom court theme
+court <- function() {
+  theme_minimal() +
+    theme(
+      panel.grid = element_blank(),
+      panel.background = element_rect(fill = "white", color = NA),
+      axis.text = element_blank(),
+      axis.ticks = element_blank(),
+      plot.title = element_text(size = 18, face = "bold"),
+      legend.position = "right"
+    )
+}
+
+#Static shot chart for all seasons (used as base for animation)
+shot_chart <- ggplot(shots, aes(x = locationX, y = locationY, shape = typeShot)) + 
+  annotation_custom(draw_court(), xmin = -321, xmax = 321, ymin = -98, ymax = 898) +
+  geom_point(aes(color = shot_made), alpha = 0.5, size = 2) +
+  scale_color_manual(values = c("Made" = "purple", "Missed" = "gold")) +
+  labs(
+    title = "Los Angeles Lakers Shot Chart",
+    subtitle = "2005–2024",
+    x = "Court X", y = "Court Y", color = "Shot Outcome"
+  ) +
+  court()
+
+#Animated shot chart by season
+animated_shot_chart <- shot_chart +
+  transition_states(season, transition_length = 2, state_length = 10) +
+  labs(title = "Los Angeles Lakers Shot Chart: {closest_state}", shape = "Shot Type")
+
+#Render animation as GIF
+animation <- animate(
+  animated_shot_chart,
+  nframes = 100,
+  fps = 5,
+  renderer = gifski_renderer()
+)
+
+#Display animation
+animation
+```
+
+•	Shot volume has increased slightly, especially from behind the 3-point line.
+
+•	Shot selection has shifted away from mid-range to more efficient zones: 3s and shots at the rim.
+
+•	Field goal percentage has remained relatively the same, even with increased long-range attempts.
+
+•	Notable surge in 3-point shot attempts beginning in 2013 aligns with NBA trends.
+
+
+Total shot attempts have recently started picking off. From 2005-2012, the Lakers attempted less shots than they did after. From 2005-2012 there were an average of 6625 shots per season. From 2013-2024 there were an average of 7000 shots per season. From 2005-2012, the Lakers shot 1568 3PT shots per season on average. This made up 23.8% of all shot attempts. From 2013-2024, the Lakers shot 2105 3PT shots per season on average. This made up 30.3% of all shot attempts.
+
+From 2005-2012, the Lakers shot 2137 midrange jump shots per season on average. This made up 32.5% of all shot attempts. From 2013-2024, the Lakers shot 1674 midrange jump shots per season on average. This made up 24.1% of all shot attempts. In 2013–2024, the Lakers attempted high-volume 3s. From the 2011-2012 season to the 2012-2013 season, there was a drastic increase in the percentage of 3PT attempts. In the 2011-2012 season, there were 5318 shot attempts and 1111 3PT attempts, resulting in 20.9% of total shots being 3PT’s. In the 2012-2013 season, there were 6632 shot attempts and 2007 3PT attempts, resulting in 30.3% of total shots being 3PT’s. By 2024, 3PT shots made up over 35% (35.8%) of all shot attempts. 
+
+In 2005-2012, the Lakers had an average of 46% field goal percentage. In 2013-2024, the Lakers had an average of 46.2% field goal percentage. Even with the shot attempts becoming more and more centered around 3PT attempts, the field goal percentage has stayed high. 
+
+The Lakers consistently generated high-percentage looks near the basket, with consistent rim pressure. From 2005-2012, the Lakers shot 2974 close range shots (0-9 ft) per season on average. This made up 45.2% of all shot attempts. From 2013-2024, the Lakers shot 3194 close range shots per season on average. This made up 45.8% of all shot attempts. 
